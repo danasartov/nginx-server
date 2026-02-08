@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: ./Nginx
+    ports:
+      - "8000:8080"
+      - "8081:8081"
+
+  tester:
+    build: ./Test
+    depends_on:
+      - nginx

@@ -1,0 +1,64 @@
+name: Docker Compose CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Build images and run docker compose
+      # Saves exit code of the Tester container
+      - name: Build and run tests with Docker Compose
+        id: compose
+        run: |
+          set +e 
+          docker compose up --build --abort-on-container-exit --exit-code-from tester
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit 0
+
+       
+      - name: Create result  file
+        run: |
+          mkdir -p artifact
+
+          # If exit code is 0, creates a file named succeeded, else, make a file named fail
+          if [ "${{ steps.compose.outputs.exit_code }}" = "0" ]; then
+            echo "tests passed" > artifact/succeeded
+          else
+            echo "tests failed with exit code ${{ steps.compose.outputs.exit_code }}" > artifact/fail
+          fi
+      # Upload succeeded artifact
+      - name: Upload succeeded artifact
+        if: steps.compose.outputs.exit_code == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: succeeded
+          path: artifact/
+
+      # Upload fail artifact
+      - name: Upload fail artifact
+        if: steps.compose.outputs.exit_code != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fail
+          path: artifact/
+
+      # Always print logs
+      - name: Show compose logs
+        if: always()
+        run: docker compose logs --no-color
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v --remove-orphans
+
+      - name: Fail job if test failed
+        if: steps.compose.outputs.exit_code != '0'
+        run: exit 1
