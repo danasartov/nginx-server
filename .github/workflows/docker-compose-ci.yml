@@ -17,14 +17,14 @@ jobs:
       - name: Build and run tests with Docker Compose
         id: compose
         run: |
-          set +e 
+          set +e # even if docker-compose fails, the script keeps running
           docker compose up --build --abort-on-container-exit --exit-code-from tester
           EXIT_CODE=$?
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
           exit 0
 
        
-      - name: Create result  file
+      - name: Create result file
         run: |
           mkdir -p artifact
 
@@ -34,6 +34,7 @@ jobs:
           else
             echo "tests failed with exit code ${{ steps.compose.outputs.exit_code }}" > artifact/fail
           fi
+          
       # Upload succeeded artifact
       - name: Upload succeeded artifact
         if: steps.compose.outputs.exit_code == '0'

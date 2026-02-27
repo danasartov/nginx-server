@@ -26,12 +26,11 @@ The rate is set to 5 requests per second, and can be modified to x requests p/s 
 The limit is per IP, if the rate limit is exceeded it returns a 429 status code.
 
 ## Manual execution
-In the Test\test.py file change HOST to "localhost".
-
 run on terminal:
 ```bash
 docker compose up --build
+```
 
 To view the pages in a browser, go to:
 - https://localhost:8080
-- https://localhost:8081
+- http://localhost:8081
