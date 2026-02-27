@@ -13,12 +13,15 @@ EXPECTED_HTML_SUBSTRING = "Hi! nice to meet you"
 
 
 def http_get(port, ctx):
-    url = f"https://{HOST}:{port}/"
+    if port == PORT_HTML:
+        url = f"https://{HOST}:{port}/"
+    else:
+        url = f"http://{HOST}:{port}/"
 
     try:
-        resp = urllib.request.urlopen(url, context=ctx)
-        body = resp.read().decode("utf-8")
-        return resp.status, body
+        with urllib.request.urlopen(url, context=ctx) as resp:
+            body = resp.read().decode("utf-8")
+            return resp.status, body
         
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8", "ignore") if e.fp else ""
@@ -27,8 +30,12 @@ def http_get(port, ctx):
 
 
 def wait_for_port(port, ctx):
-    url = f"https://{HOST}:{port}/"
     
+    if port == PORT_HTML:
+        url = f"https://{HOST}:{port}/"
+    else:
+        url = f"http://{HOST}:{port}/"
+
     for _ in range(20):
         try:
             urllib.request.urlopen(url, context=ctx)
@@ -40,17 +47,20 @@ def wait_for_port(port, ctx):
         except Exception:
             time.sleep(0.5)
     else:
-        print(f"{HOST}:{port} not reachable")
+        print(f"{url} not reachable")
 
 
 
 def main():
+    # Variables for logging
     HTML_Failed = 0
     PORT_Failed = 0
 
+    # Create custom ssl context to pass to the HTTPS connection. 
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    ctx.check_hostname = False 
+    ctx.verify_mode = ssl.CERT_NONE # This disables certificate verification,
+                                    # so our self signed cert will be accepted
 
     # Wait for nginx ports to be reachable 
     wait_for_port(PORT_HTML, ctx)
@@ -67,12 +77,14 @@ def main():
         HTML_Failed = 1
         print(f"HTML server body missing expected substring: {EXPECTED_HTML_SUBSTRING}")
 
+
     # Test the error server 
     status, _ = http_get(PORT_ERR, ctx)
     
     if status != 503:
         PORT_Failed = 1
         print(f"Error server expected 503, got {status}")
+
 
     # Test rate limit
     def hit(port):
@@ -92,7 +104,7 @@ def main():
         sys.exit(0)
     else:
         if HTML_Failed == 1:
-            print("\nERROR: ome tests failed on the HTML test")
+            print("\nERROR: some tests failed on the HTML test")
         else:
             print("\nERROR: some tests failed on the 503 nginx server")
         sys.exit(1)

@@ -23,4 +23,4 @@ RUN mkdir -p /etc/nginx/certs \
 
 EXPOSE 8080 8081 
 
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT  ["nginx", "-g", "daemon off;"]
