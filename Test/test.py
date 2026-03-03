@@ -40,9 +40,9 @@ def wait_for_port(port, ctx):
         try:
             urllib.request.urlopen(url, context=ctx)
             break
-        except urllib.error.HTTPError: 
+        except urllib.error.HTTPError as e: 
             # If the request gets 503 and its the error port, its OK
-            if port == PORT_ERR:
+            if port == PORT_ERR and e.status == 503:
                 break
         except Exception:
             time.sleep(0.5)
@@ -99,13 +99,16 @@ def main():
         print("ERROR: rate limit not working on HTML server")
 
 
-    if HTML_Failed == 0 and PORT_Failed == 0:
+    if HTML_Failed == 0 and PORT_Failed == 0: # Both succeeded
         print("\nOK: all tests passed")
         sys.exit(0)
     else:
         if HTML_Failed == 1:
-            print("\nERROR: some tests failed on the HTML test")
-        else:
+            if HTML_Failed == 1: # Both HTML and PORT failed
+                print("\nERROR: some tests failed on HTML test and on the 503 nginx server")
+            else: # Only HTML failed
+                print("\nERROR: some tests failed on the HTML test")
+        else: # Only PORT failed
             print("\nERROR: some tests failed on the 503 nginx server")
         sys.exit(1)
 
