@@ -1,5 +1,5 @@
 # Nginx-server
-This is a project created by Dana Sartov.
+This is a project was created by Dana Sartov.
 
 ## How It Works
 This repo contains 3 folders: Nginx, Test and Github Action workflow.
